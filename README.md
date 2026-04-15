@@ -1,5 +1,38 @@
-# Vue 3 + TypeScript + Vite
+# Shadcn ui DataTable component 
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+```vue 
+<script setup lang="ts">
+import DataTable, { defineColumns } from '@/components/DataTable'
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+type User = {
+  id: number
+  name: string
+  email: string
+}
+
+const columns = defineColumns<User>([
+  { id: 'id', label: 'ID', field: 'id', width: 80, sortable: true },
+  { id: 'name', label: 'Nome', field: 'name', sortable: true },
+  { id: 'email', label: 'Email', field: 'email' }
+])
+
+const rows: User[] = [
+  { id: 1, name: 'Rick', email: 'rick@email.com' },
+  { id: 2, name: 'Morty', email: 'morty@email.com' }
+]
+</script>
+
+<template>
+  <DataTable :columns="columns" :rows="rows">
+    <!-- custom header -->
+    <template #header-name="{ column }">
+      <span>👤 {{ column.label }}</span>
+    </template>
+
+    <!-- custom cell -->
+    <template #row-email="{ row }">
+      <a :href="`mailto:${row.email}`">{{ row.email }}</a>
+    </template>
+  </DataTable>
+</template>
+```
