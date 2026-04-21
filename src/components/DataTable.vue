@@ -46,14 +46,18 @@ function findFieldValue(row: T, column: DataTableColumn<T>) {
         <TableHeader>
             <TableRow>
                 <TableHead v-for="(c, index) of columns" :key="index">
-                    {{ c.label }}
+                    <slot :name="`column-${c.id}`" :column="c">
+                        {{ c.label }}
+                    </slot>
                 </TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
             <TableRow v-for="(r, ri) of rows" :key="ri">
                 <TableCell v-for="(c, ci) of columns" :key="ci">
-                    {{ findFieldValue(r, c) }}
+                    <slot :name="`row-${c.id}`" :row="r" :column="c">
+                        {{ findFieldValue(r, c) }}
+                    </slot>
                 </TableCell>
             </TableRow>
         </TableBody>

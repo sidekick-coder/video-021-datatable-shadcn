@@ -3,6 +3,8 @@ import DataTable, { defineColumns } from '@/components/DataTable.vue'
 import { faker } from '@faker-js/faker'
 import Card from './components/ui/card/Card.vue';
 import { ref } from 'vue';
+import { Calendar, Tag } from 'lucide-vue-next';
+import Badge from './components/ui/badge/Badge.vue';
 
 interface Product {
   id: number
@@ -74,7 +76,43 @@ rows.value = generate()
 <template>
   <div class="flex h-screen w-screen items-center justify-center">
     <Card class="w-[1200px]">
-      <DataTable :columns="columns" :rows="rows" />
+      <DataTable :columns="columns" :rows="rows">
+
+        <template #column-tags="{ column }">
+          <div class="flex items-center gap-2">
+            <Tag :size="16"></Tag>
+            <span>{{ column.label }}</span>
+          </div>
+        </template>
+
+        <template #column-created_at="{ column }">
+          <div class="flex items-center gap-2">
+            <Calendar :size="16" />
+            <span>{{ column.label }}</span>
+          </div>
+        </template>
+
+        <template #column-updated_at="{ column }">
+          <div class="flex items-center gap-2">
+            <Calendar :size="16" />
+            <span>{{ column.label }}</span>
+          </div>
+        </template>
+
+        <template #row-status="{ row }">
+          <div :class="row.status === 'active' ? 'text-green-500' : 'text-red-500'" class="font-bold uppercase text-xs">
+            {{ row.status }}
+          </div>
+        </template>
+
+        <template #row-tags="{ row }">
+          <div class="flex gap-1">
+            <Badge v-for="t of row.tags" :key="t">
+              {{ t }}
+            </Badge>
+          </div>
+        </template>
+      </DataTable>
     </Card>
   </div>
 </template>
