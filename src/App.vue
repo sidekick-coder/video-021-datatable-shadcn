@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DataTable, { defineColumns } from '@/components/DataTable.vue'
+import DataTable, { defineColumns, type DataTableSort } from '@/components/DataTable.vue'
 import { faker } from '@faker-js/faker'
 import Card from './components/ui/card/Card.vue';
 import { ref } from 'vue';
@@ -36,7 +36,8 @@ const columns = defineColumns<Product>([
   {
     id: 'tags',
     label: 'Tags',
-    field: row => row.tags.join()
+    field: row => row.tags.join(),
+    sortable: false
   },
   {
     id: 'created_at',
@@ -52,6 +53,10 @@ const columns = defineColumns<Product>([
 
 const rows = ref<Product[]>([])
 const selected = ref([])
+const sort = ref<DataTableSort[]>([{
+  key: 'id',
+  direction: 'desc'
+}])
 
 function generate(length = 20): Product[] {
   const rows: Product[] = []
@@ -85,7 +90,14 @@ rows.value = generate()
         <div>{{ selected }}</div>
       </CardHeader>
 
-      <DataTable v-model:selected="selected" :columns="columns" :rows="rows" item-key="id" enable-selection>
+      <DataTable 
+        v-model:selected="selected" 
+        v-model:sort="sort" 
+        :columns="columns" 
+        :rows="rows" 
+        item-key="id" 
+        enable-selection
+      >
 
         <template #column-tags="{ column }">
           <div class="flex items-center gap-2">

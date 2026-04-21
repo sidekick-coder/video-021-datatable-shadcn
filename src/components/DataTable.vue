@@ -3,6 +3,7 @@ export interface DataTableColumn<T extends Record<string, any> = Record<string, 
     id?: string
     label?: string
     field?: keyof T | ((row: T) => any) | (string & {})
+    sortable?: boolean
 }
 
 export interface DataTableSort<T extends Record<string, any> = Record<string, any>> {
@@ -24,8 +25,10 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { get } from 'lodash-es'
+import { get, orderBy } from 'lodash-es'
 import Checkbox from './ui/checkbox/Checkbox.vue'
+import { computed } from 'vue'
+import { ArrowUp } from 'lucide-vue-next'
 
 const props = defineProps({
     itemKey: {
@@ -54,8 +57,31 @@ const columns = defineModel('columns', {
 })
 
 const sort = defineModel('sort', {
-    type: Array as () => DataTableSort<T>[],
+    type: Object as () => DataTableSort<T>[],
     default: () => []
+})
+
+const formatedColumns = computed(() => columns.value.map((c, index) => ({
+    id: c.id || String(index),
+    ...c,
+})))
+
+const formated = computed(() => rows.value.map(row => {
+    let result = { _raw: row } as any
+
+    for (const c of formatedColumns.value) {
+        result[c.id] = findFieldValue(row, c as any)
+    }
+
+    return result
+}))
+
+const ordered = computed(() => {
+    const keys = sort.value.map(s => s.key)
+
+    const directions = sort.value.map(s => s.direction || 'desc')
+
+    return orderBy(formated.value, keys, directions)
 })
 
 function findFieldValue(row: T, column: DataTableColumn<T>) {
@@ -93,6 +119,36 @@ function toggle(row: T) {
     selected.value.splice(index, 1)
 }
 
+function setSort(column: DataTableColumn<T>) {
+    if (column.sortable === false) return
+
+    const existing = sort.value.find(s => s.key === column.id)
+    const index = sort.value.findIndex(s => s.key === column.id)
+
+    if (existing && existing.direction === 'desc') {
+        sort.value.splice(index, 1)
+        return
+    }
+
+    if (existing && existing.direction === 'asc') {
+        existing.direction = 'desc'
+        return
+    }
+
+    sort.value.push({ 
+        key: column.id!,
+        direction: 'asc'
+    })
+}
+
+function isSorting(column: DataTableColumn<T>) {
+    return sort.value.some(c => c.key === column.id)
+}
+
+function isSortingDesc(column: DataTableColumn<T>) {
+    return sort.value.some(c => c.key === column.id && c.direction === 'desc')
+}
+
 </script>
 
 <template>
@@ -101,21 +157,35 @@ function toggle(row: T) {
             <TableRow>
                 <TableHead v-if="enableSelection" class="w-[50px]" />
 
-                <TableHead v-for="(c, index) of columns" :key="index">
-                    <slot :name="`column-${c.id}`" :column="c">
-                        {{ c.label }}
-                    </slot>
+                <TableHead v-for="(c, index) of formatedColumns" :key="index" class="group" @click="setSort(c)">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <slot :name="`column-${c.id}`" :column="c">
+                                {{ c.label }}
+                            </slot>
+                        </div>
+                        
+                        <ArrowUp 
+                            v-if="c.sortable !== false"
+                            :size="12" 
+                            :class="[
+                                isSorting(c) ? '' : 'opacity-0 group-hover:opacity-100',
+                                isSortingDesc(c) ? 'rotate-180' : ''
+                            ]" 
+                        />
+                        
+                    </div>
                 </TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
-            <TableRow v-for="(r, ri) of rows" :key="ri">
+            <TableRow v-for="(r, ri) of ordered" :key="ri">
                 <TableCell v-if="enableSelection" class="w-[50px]">
                     <Checkbox :model-value="isSelected(r)" @update:model-value="toggle(r)" />
                 </TableCell>
-                <TableCell v-for="(c, ci) of columns" :key="ci">
-                    <slot :name="`row-${c.id}`" :row="r" :column="c">
-                        {{ findFieldValue(r, c) }}
+                <TableCell v-for="(c, ci) of formatedColumns" :key="ci">
+                    <slot :name="`row-${c.id}`" :row="r._raw" :column="c">
+                        {{ r[c.id] }}
                     </slot>
                 </TableCell>
             </TableRow>
