@@ -1,9 +1,19 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/button'
+import DataTable from '@/components/DataTable.vue'
+import Card from './components/ui/card/Card.vue';
+
+interface Column {}
+interface Row {}
+
+const columns = [] as Column[]
+const rows = [] as Row[]
+
 </script>
 
 <template>
-  <div>
-    <Button>Click me</Button>
+  <div class="flex h-screen w-screen items-center justify-center">
+    <Card class="w-[500px]">      
+      <DataTable :columns="columns" :rows="rows" />
+    </Card>
   </div>
 </template>
