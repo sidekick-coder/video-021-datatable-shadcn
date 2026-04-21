@@ -5,6 +5,8 @@ import Card from './components/ui/card/Card.vue';
 import { ref } from 'vue';
 import { Calendar, Tag } from 'lucide-vue-next';
 import Badge from './components/ui/badge/Badge.vue';
+import CardHeader from './components/ui/card/CardHeader.vue';
+import CardTitle from './components/ui/card/CardTitle.vue';
 
 interface Product {
   id: number
@@ -49,6 +51,7 @@ const columns = defineColumns<Product>([
 ])
 
 const rows = ref<Product[]>([])
+const selected = ref([])
 
 function generate(length = 20): Product[] {
   const rows: Product[] = []
@@ -76,7 +79,13 @@ rows.value = generate()
 <template>
   <div class="flex h-screen w-screen items-center justify-center">
     <Card class="w-[1200px]">
-      <DataTable :columns="columns" :rows="rows">
+      <CardHeader class="border-b">
+        <CardTitle>Data Table</CardTitle>
+
+        <div>{{ selected }}</div>
+      </CardHeader>
+
+      <DataTable v-model:selected="selected" :columns="columns" :rows="rows" item-key="id" enable-selection>
 
         <template #column-tags="{ column }">
           <div class="flex items-center gap-2">
