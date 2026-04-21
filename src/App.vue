@@ -2,11 +2,13 @@
 import DataTable, { defineColumns, type DataTableSort } from '@/components/DataTable.vue'
 import { faker } from '@faker-js/faker'
 import Card from './components/ui/card/Card.vue';
-import { ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Calendar, Tag } from 'lucide-vue-next';
 import Badge from './components/ui/badge/Badge.vue';
 import CardHeader from './components/ui/card/CardHeader.vue';
 import CardTitle from './components/ui/card/CardTitle.vue';
+import DataTablePagination from './components/DataTablePagination.vue';
+import { orderBy } from 'lodash-es';
 
 interface Product {
   id: number
@@ -51,12 +53,30 @@ const columns = defineColumns<Product>([
   },
 ])
 
+const page = ref(1)
+const limit = ref(10)
 const rows = ref<Product[]>([])
 const selected = ref([])
 const sort = ref<DataTableSort[]>([{
   key: 'id',
-  direction: 'desc'
+  direction: 'asc'
 }])
+
+const totalPages = computed(() => Math.ceil(rows.value.length / limit.value))
+
+const ordered = computed(() => {
+    const keys = sort.value.map(s => s.key)
+
+    const directions = sort.value.map(s => s.direction || 'desc')
+
+    return orderBy(rows.value, keys, directions)
+})
+
+const currentPage = computed(() => {
+  const offset = (page.value - 1) * limit.value
+  
+  return ordered.value.slice(offset, offset + limit.value)
+})
 
 function generate(length = 20): Product[] {
   const rows: Product[] = []
@@ -78,26 +98,24 @@ function generate(length = 20): Product[] {
   return rows
 }
 
-rows.value = generate()
+onMounted(() => {
+  rows.value = generate(100)
+})
+
+watch([limit, sort], () => {
+  page.value = 1
+}, { deep: true })
 </script>
 
 <template>
   <div class="flex h-screen w-screen items-center justify-center">
     <Card class="w-[1200px]">
-      <CardHeader class="border-b">
+      <CardHeader >
         <CardTitle>Data Table</CardTitle>
-
-        <div>{{ selected }}</div>
       </CardHeader>
 
-      <DataTable 
-        v-model:selected="selected" 
-        v-model:sort="sort" 
-        :columns="columns" 
-        :rows="rows" 
-        item-key="id" 
-        enable-selection
-      >
+      <DataTable v-model:selected="selected" v-model:sort="sort" :columns="columns" :rows="currentPage" item-key="id"
+        enable-selection>
 
         <template #column-tags="{ column }">
           <div class="flex items-center gap-2">
@@ -134,6 +152,21 @@ rows.value = generate()
           </div>
         </template>
       </DataTable>
+
+      <DataTablePagination 
+        v-model:page="page" 
+        v-model:limit="limit" 
+        :total-rows="rows.length"
+        :total-pages="totalPages"
+      >
+
+        <template #caption>
+          <div class="text-sm text-muted-foreground">
+            {{ `${selected.length} selected of ${rows.length}` }}
+          </div>
+        </template>
+
+      </DataTablePagination>
     </Card>
   </div>
 </template>

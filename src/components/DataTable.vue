@@ -25,7 +25,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { get, orderBy } from 'lodash-es'
+import { get } from 'lodash-es'
 import Checkbox from './ui/checkbox/Checkbox.vue'
 import { computed } from 'vue'
 import { ArrowUp } from 'lucide-vue-next'
@@ -75,14 +75,6 @@ const formated = computed(() => rows.value.map(row => {
 
     return result
 }))
-
-const ordered = computed(() => {
-    const keys = sort.value.map(s => s.key)
-
-    const directions = sort.value.map(s => s.direction || 'desc')
-
-    return orderBy(formated.value, keys, directions)
-})
 
 function findFieldValue(row: T, column: DataTableColumn<T>) {
     if (typeof column.field === 'function') {
@@ -179,7 +171,7 @@ function isSortingDesc(column: DataTableColumn<T>) {
             </TableRow>
         </TableHeader>
         <TableBody>
-            <TableRow v-for="(r, ri) of ordered" :key="ri">
+            <TableRow v-for="(r, ri) of formated" :key="ri">
                 <TableCell v-if="enableSelection" class="w-[50px]">
                     <Checkbox :model-value="isSelected(r)" @update:model-value="toggle(r)" />
                 </TableCell>
